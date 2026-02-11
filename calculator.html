@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Простой калькулятор</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f4f6;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .calc {
+      background: #ffffff;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      width: 260px;
+    }
+
+    .display {
+      width: 100%;
+      height: 50px;
+      margin-bottom: 10px;
+      padding: 8px 10px;
+      font-size: 24px;
+      text-align: right;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      box-sizing: border-box;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 8px;
+    }
+
+    button {
+      padding: 12px 0;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background 0.15s, transform 0.05s;
+    }
+
+    button:active {
+      transform: scale(0.97);
+    }
+
+    .btn-num {
+      background: #e5e7eb;
+    }
+
+    .btn-op {
+      background: #f97316;
+      color: white;
+    }
+
+    .btn-eq {
+      background: #22c55e;
+      color: white;
+      grid-column: span 2;
+    }
+
+    .btn-clear {
+      background: #ef4444;
+      color: white;
+    }
+
+    .btn-other {
+      background: #d1d5db;
+    }
+  </style>
+</head>
+<body>
+  <div class="calc">
+    <input id="display" class="display" type="text" readonly />
+
+    <div class="buttons">
+      <button class="btn-clear" data-action="clear">C</button>
+      <button class="btn-other" data-action="back">←</button>
+      <button class="btn-other" data-value=".">.</button>
+      <button class="btn-op" data-value="/">÷</button>
+
+      <button class="btn-num" data-value="7">7</button>
+      <button class="btn-num" data-value="8">8</button>
+      <button class="btn-num" data-value="9">9</button>
+      <button class="btn-op" data-value="*">×</button>
+
+      <button class="btn-num" data-value="4">4</button>
+      <button class="btn-num" data-value="5">5</button>
+      <button class="btn-num" data-value="6">6</button>
+      <button class="btn-op" data-value="-">−</button>
+
+      <button class="btn-num" data-value="1">1</button>
+      <button class="btn-num" data-value="2">2</button>
+      <button class="btn-num" data-value="3">3</button>
+      <button class="btn-op" data-value="+">+</button>
+
+      <button class="btn-num" data-value="0">0</button>
+      <button class="btn-eq" data-action="equals">=</button>
+    </div>
+  </div>
+
+  <script>
+    (function () {
+      const display = document.getElementById('display');
+      const buttons = document.querySelector('.buttons');
+
+      let expression = '';
+
+      buttons.addEventListener('click', function (e) {
+        const btn = e.target;
+        if (btn.tagName !== 'BUTTON') return;
+
+        const value = btn.getAttribute('data-value');
+        const action = btn.getAttribute('data-action');
+
+        if (action === 'clear') {
+          expression = '';
+          updateDisplay();
+          return;
+        }
+
+        if (action === 'back') {
+          expression = expression.slice(0, -1);
+          updateDisplay();
+          return;
+        }
+
+        if (action === 'equals') {
+          calculate();
+          return;
+        }
+
+        if (value) {
+          expression += value;
+          updateDisplay();
+        }
+      });
+
+      function updateDisplay() {
+        display.value = expression;
+      }
+
+      function calculate() {
+        if (!expression) return;
+        try {
+          const result = Function('"use strict"; return (' + expression + ')')();
+          expression = String(result);
+          updateDisplay();
+        } catch (e) {
+          expression = '';
+          display.value = 'Ошибка';
+          setTimeout(() => {
+            display.value = '';
+          }, 1000);
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
