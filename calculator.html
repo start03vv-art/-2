@@ -4,9 +4,38 @@
   <meta charset="UTF-8" />
   <title>Простой калькулятор</title>
   <style>
+    :root {
+      --bg-color: #f3f4f6;
+      --text-color: #111827;
+      --panel-bg: #ffffff;
+      --panel-shadow: rgba(0, 0, 0, 0.1);
+      --border-color: #d1d5db;
+      --btn-num-bg: #e5e7eb;
+      --btn-op-bg: #f97316;
+      --btn-op-color: #ffffff;
+      --btn-eq-bg: #22c55e;
+      --btn-eq-color: #ffffff;
+      --btn-clear-bg: #ef4444;
+      --btn-clear-color: #ffffff;
+      --btn-other-bg: #d1d5db;
+    }
+
+    body[data-theme="dark"] {
+      --bg-color: #020617;
+      --text-color: #e5e7eb;
+      --panel-bg: #020617;
+      --panel-shadow: rgba(0, 0, 0, 0.6);
+      --border-color: #4b5563;
+      --btn-num-bg: #111827;
+      --btn-op-bg: #ea580c;
+      --btn-eq-bg: #16a34a;
+      --btn-other-bg: #1f2937;
+    }
+
     body {
       font-family: Arial, sans-serif;
-      background: #f3f4f6;
+      background: var(--bg-color);
+      color: var(--text-color);
       display: flex;
       justify-content: center;
       align-items: center;
@@ -15,11 +44,44 @@
     }
 
     .calc {
-      background: #ffffff;
-      padding: 20px;
+      background: var(--panel-bg);
+      padding: 16px 16px 20px;
       border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+      box-shadow: 0 10px 25px var(--panel-shadow);
       width: 260px;
+      box-sizing: border-box;
+    }
+
+    .calc-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 8px;
+      font-size: 13px;
+      color: var(--text-color);
+      opacity: 0.9;
+    }
+
+    .theme-toggle {
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      padding: 3px 8px;
+      cursor: pointer;
+      font-size: 11px;
+      background: transparent;
+      color: var(--text-color);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.05s;
+    }
+
+    .theme-toggle span {
+      font-size: 13px;
+    }
+
+    .theme-toggle:active {
+      transform: scale(0.96);
     }
 
     .display {
@@ -30,8 +92,15 @@
       font-size: 24px;
       text-align: right;
       border-radius: 8px;
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--border-color);
       box-sizing: border-box;
+      background: transparent;
+      color: var(--text-color);
+    }
+
+    .display::placeholder {
+      color: var(--text-color);
+      opacity: 0.4;
     }
 
     .buttons {
@@ -46,40 +115,51 @@
       border: none;
       border-radius: 8px;
       cursor: pointer;
-      transition: background 0.15s, transform 0.05s;
+      transition: background 0.15s, transform 0.05s, box-shadow 0.1s;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.15);
     }
 
     button:active {
       transform: scale(0.97);
+      box-shadow: none;
     }
 
     .btn-num {
-      background: #e5e7eb;
+      background: var(--btn-num-bg);
+      color: var(--text-color);
     }
 
     .btn-op {
-      background: #f97316;
-      color: white;
+      background: var(--btn-op-bg);
+      color: var(--btn-op-color);
     }
 
     .btn-eq {
-      background: #22c55e;
-      color: white;
+      background: var(--btn-eq-bg);
+      color: var(--btn-eq-color);
       grid-column: span 2;
     }
 
     .btn-clear {
-      background: #ef4444;
-      color: white;
+      background: var(--btn-clear-bg);
+      color: var(--btn-clear-color);
     }
 
     .btn-other {
-      background: #d1d5db;
+      background: var(--btn-other-bg);
+      color: var(--text-color);
     }
   </style>
 </head>
 <body>
   <div class="calc">
+    <div class="calc-header">
+      <span>Калькулятор</span>
+      <button id="themeToggle" class="theme-toggle" type="button">
+        <span id="themeIcon">🌙</span>
+        <span id="themeLabel">Тёмная</span>
+      </button>
+    </div>
     <input id="display" class="display" type="text" readonly />
 
     <div class="buttons">
@@ -112,8 +192,13 @@
     (function () {
       const display = document.getElementById('display');
       const buttons = document.querySelector('.buttons');
+      const themeToggle = document.getElementById('themeToggle');
+      const themeIcon = document.getElementById('themeIcon');
+      const themeLabel = document.getElementById('themeLabel');
 
       let expression = '';
+
+      initTheme();
 
       buttons.addEventListener('click', function (e) {
         const btn = e.target;
@@ -161,6 +246,34 @@
           setTimeout(() => {
             display.value = '';
           }, 1000);
+        }
+      }
+
+      function initTheme() {
+        const saved = localStorage.getItem('calc-theme');
+        const prefersDark = window.matchMedia &&
+          window.matchMedia('(prefers-color-scheme: dark)').matches;
+
+        const theme = saved || (prefersDark ? 'dark' : 'light');
+        applyTheme(theme);
+
+        themeToggle.addEventListener('click', () => {
+          const current = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+          const next = current === 'dark' ? 'light' : 'dark';
+          applyTheme(next);
+          localStorage.setItem('calc-theme', next);
+        });
+      }
+
+      function applyTheme(theme) {
+        if (theme === 'dark') {
+          document.body.setAttribute('data-theme', 'dark');
+          themeIcon.textContent = '☀️';
+          themeLabel.textContent = 'Светлая';
+        } else {
+          document.body.setAttribute('data-theme', 'light');
+          themeIcon.textContent = '🌙';
+          themeLabel.textContent = 'Тёмная';
         }
       }
     })();
