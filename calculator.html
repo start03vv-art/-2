@@ -48,8 +48,11 @@
       padding: 16px 16px 20px;
       border-radius: 12px;
       box-shadow: 0 10px 25px var(--panel-shadow);
-      width: 260px;
+      width: 320px;
       box-sizing: border-box;
+      display: grid;
+      grid-template-columns: 1.4fr 1fr;
+      column-gap: 12px;
     }
 
     .calc-header {
@@ -87,7 +90,7 @@
     .display {
       width: 100%;
       height: 50px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
       padding: 8px 10px;
       font-size: 24px;
       text-align: right;
@@ -149,43 +152,120 @@
       background: var(--btn-other-bg);
       color: var(--text-color);
     }
+
+    .calc-main {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .history {
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      padding: 6px 8px;
+      font-size: 11px;
+      max-height: 220px;
+      overflow-y: auto;
+      background: rgba(15, 23, 42, 0.02);
+    }
+
+    body[data-theme="dark"] .history {
+      background: rgba(15, 23, 42, 0.6);
+    }
+
+    .history-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 4px;
+      font-size: 11px;
+      opacity: 0.8;
+    }
+
+    .history-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column-reverse;
+      gap: 2px;
+    }
+
+    .history-item {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item-expression {
+      opacity: 0.7;
+    }
+
+    .history-item-result {
+      margin-left: 4px;
+      font-weight: bold;
+    }
+
+    .history-clear {
+      border: none;
+      background: transparent;
+      color: var(--text-color);
+      font-size: 10px;
+      cursor: pointer;
+      opacity: 0.7;
+      padding: 0;
+    }
+
+    .history-clear:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
   </style>
 </head>
 <body>
   <div class="calc">
-    <div class="calc-header">
-      <span>Калькулятор</span>
-      <button id="themeToggle" class="theme-toggle" type="button">
-        <span id="themeIcon">🌙</span>
-        <span id="themeLabel">Тёмная</span>
-      </button>
+    <div class="calc-main">
+      <div class="calc-header">
+        <span>Калькулятор</span>
+        <button id="themeToggle" class="theme-toggle" type="button">
+          <span id="themeIcon">🌙</span>
+          <span id="themeLabel">Тёмная</span>
+        </button>
+      </div>
+      <input id="display" class="display" type="text" readonly />
+
+      <div class="buttons">
+        <button class="btn-clear" data-action="clear">C</button>
+        <button class="btn-other" data-action="back">←</button>
+        <button class="btn-other" data-value=".">.</button>
+        <button class="btn-op" data-value="/">÷</button>
+
+        <button class="btn-num" data-value="7">7</button>
+        <button class="btn-num" data-value="8">8</button>
+        <button class="btn-num" data-value="9">9</button>
+        <button class="btn-op" data-value="*">×</button>
+
+        <button class="btn-num" data-value="4">4</button>
+        <button class="btn-num" data-value="5">5</button>
+        <button class="btn-num" data-value="6">6</button>
+        <button class="btn-op" data-value="-">−</button>
+
+        <button class="btn-num" data-value="1">1</button>
+        <button class="btn-num" data-value="2">2</button>
+        <button class="btn-num" data-value="3">3</button>
+        <button class="btn-op" data-value="+">+</button>
+
+        <button class="btn-num" data-value="0">0</button>
+        <button class="btn-eq" data-action="equals">=</button>
+      </div>
     </div>
-    <input id="display" class="display" type="text" readonly />
 
-    <div class="buttons">
-      <button class="btn-clear" data-action="clear">C</button>
-      <button class="btn-other" data-action="back">←</button>
-      <button class="btn-other" data-value=".">.</button>
-      <button class="btn-op" data-value="/">÷</button>
-
-      <button class="btn-num" data-value="7">7</button>
-      <button class="btn-num" data-value="8">8</button>
-      <button class="btn-num" data-value="9">9</button>
-      <button class="btn-op" data-value="*">×</button>
-
-      <button class="btn-num" data-value="4">4</button>
-      <button class="btn-num" data-value="5">5</button>
-      <button class="btn-num" data-value="6">6</button>
-      <button class="btn-op" data-value="-">−</button>
-
-      <button class="btn-num" data-value="1">1</button>
-      <button class="btn-num" data-value="2">2</button>
-      <button class="btn-num" data-value="3">3</button>
-      <button class="btn-op" data-value="+">+</button>
-
-      <button class="btn-num" data-value="0">0</button>
-      <button class="btn-eq" data-action="equals">=</button>
-    </div>
+    <aside class="history">
+      <div class="history-header">
+        <span>Журнал</span>
+        <button id="historyClear" class="history-clear" type="button">очистить</button>
+      </div>
+      <ul id="historyList" class="history-list"></ul>
+    </aside>
   </div>
 
   <script>
@@ -195,10 +275,13 @@
       const themeToggle = document.getElementById('themeToggle');
       const themeIcon = document.getElementById('themeIcon');
       const themeLabel = document.getElementById('themeLabel');
+      const historyList = document.getElementById('historyList');
+      const historyClear = document.getElementById('historyClear');
 
       let expression = '';
 
       initTheme();
+      initHistory();
 
       buttons.addEventListener('click', function (e) {
         const btn = e.target;
@@ -237,9 +320,11 @@
       function calculate() {
         if (!expression) return;
         try {
-          const result = Function('"use strict"; return (' + expression + ')')();
+          const expr = expression;
+          const result = Function('"use strict"; return (' + expr + ')')();
           expression = String(result);
           updateDisplay();
+          addToHistory(expr, result);
         } catch (e) {
           expression = '';
           display.value = 'Ошибка';
@@ -275,6 +360,29 @@
           themeIcon.textContent = '🌙';
           themeLabel.textContent = 'Тёмная';
         }
+      }
+
+      function initHistory() {
+        historyClear.addEventListener('click', () => {
+          historyList.innerHTML = '';
+        });
+      }
+
+      function addToHistory(expr, result) {
+        const li = document.createElement('li');
+        li.className = 'history-item';
+
+        const exprSpan = document.createElement('span');
+        exprSpan.className = 'history-item-expression';
+        exprSpan.textContent = expr + ' =';
+
+        const resSpan = document.createElement('span');
+        resSpan.className = 'history-item-result';
+        resSpan.textContent = result;
+
+        li.appendChild(exprSpan);
+        li.appendChild(resSpan);
+        historyList.appendChild(li);
       }
     })();
   </script>
